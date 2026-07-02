@@ -1,3 +1,179 @@
+
+// Evento disparado assim que toda a árvore estrutural do HTML carregar na tela
+document.addEventListener('DOMContentLoaded', function() {
+    initNavbar();        // Executa controle de rolagem e links ativos
+    initMobileMenu();    // Controle do menu hambúrguer responsivo
+    initContactForm();   // Executa escuta e simulação de envio do form
+    initServiceModal();  // Abre o modal de detalhes ao clicar nos cards de soluções
+});
+
+/**
+ * 1. CONTROLE DINÂMICO DA NAVBAR E ROLAGEM DE PÁGINA
+ * Muda a opacidade do cabeçalho e aplica classe ativa baseada no scroll real do usuário.
+ */
+function initNavbar() {
+    const navbar = document.getElementById('navbar');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    window.addEventListener('scroll', function() {
+        // Se desceu mais de 50 pixels, escurece a barra para dar leitura sobre conteúdos de fundo
+        if (window.scrollY > 50) {
+            navbar.style.backgroundColor = "rgba(0, 0, 0, 0.95)";
+            navbar.style.boxShadow = "0 4px 20px rgba(0,0,0,0.5)";
+        } else {
+            navbar.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
+            navbar.style.boxShadow = "none";
+        }
+
+        // Identificação automática de qual seção está visível no monitor do cliente
+        let currentSection = 'inicio';
+        const sections = ['inicio', 'sobre', 'por-que', 'solucoes', 'comentarios', 'contato'];
+
+        sections.forEach(sectionId => {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                const sectionTop = section.offsetTop - 160; // Desconto da altura da barra fixa
+                if (window.scrollY >= sectionTop) {
+                    currentSection = sectionId;
+                }
+            }
+        });
+
+        // Remove a classe de destaque de todos os links e aplica apenas na seção ativa atual
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${currentSection}`) {
+                link.classList.add('active');
+            }
+        });
+    });
+}
+
+/**
+ * 2. CONTROLE DO MENU HAMBÚRGUER RESPONSIVO
+ */
+function initMobileMenu() {
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+    const links = document.querySelectorAll('.nav-link');
+
+    if (menuToggle && navLinks) {
+        // Abre ou fecha o menu ao clicar no botão hambúrguer
+        menuToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            navLinks.classList.toggle('active');
+
+            // Muda o ícone entre barras (bars) e fechar (xmark)
+            const icon = menuToggle.querySelector('i');
+            if (navLinks.classList.contains('active')) {
+                icon.className = 'fa-solid fa-xmark';
+            } else {
+                icon.className = 'fa-solid fa-bars';
+            }
+        });
+
+        // Fecha o menu automaticamente ao clicar em qualquer link
+        links.forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                menuToggle.querySelector('i').className = 'fa-solid fa-bars';
+            });
+        });
+
+        // Fecha o menu se clicar em qualquer outra parte da tela
+        document.addEventListener('click', function(e) {
+            if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
+                navLinks.classList.remove('active');
+                menuToggle.querySelector('i').className = 'fa-solid fa-bars';
+            }
+        });
+    }
+}
+
+/**
+ * 3. BASE DE DADOS COM AS INFORMAÇÕES DETALHADAS DE CADA SERVIÇO
+ * Usada para preencher o modal que abre ao clicar em um card de solução.
+ */
+const serviceDetails = {
+    mecanica: {
+        icon: 'fa-solid fa-wrench',
+        title: 'Mecânica Geral',
+        description: 'Reparos completos e preventivos em motor, transmissão, suspensão e freios, com revisão minuciosa de todos os sistemas mecânicos vitais do seu veículo para garantir máxima durabilidade e segurança.',
+        features: [
+            'Substituição técnica de correias dentadas e correntes de comando',
+            'Troca de juntas de cabeçote e coxins do motor',
+            'Revisão completa do sistema de suspensão e freios',
+            'Inspeção minuciosa de todos os sistemas mecânicos vitais',
+            'Plano de manutenção preventiva personalizado'
+        ]
+    },
+    motor: {
+        icon: 'fa-solid fa-cogs',
+        title: 'Motor e Câmbio',
+        description: 'Diagnóstico computadorizado preciso e manutenção especializada em motores e transmissões automáticas, automatizadas e manuais, feita por profissionais certificados.',
+        features: [
+            'Retífica completa de blocos e cabeçotes',
+            'Manutenção de câmbios automáticos, CVT, Dualogic e Powershift',
+            'Substituição técnica de embreagens',
+            'Ajustes de sincronismo e correntes/correias',
+            'Diagnóstico computadorizado completo do conjunto motriz'
+        ]
+    },
+    freios: {
+        icon: 'fa-solid fa-car-battery',
+        title: 'Sistema de Freios',
+        description: 'Manutenção essencial e corretiva do sistema de freios, com calibração eletrônica avançada dos sistemas de segurança ativa para garantir a máxima proteção do seu veículo.',
+        features: [
+            'Troca de discos, pastilhas, tambores e sapatas',
+            'Fluidos de freio de alta performance (DOT 4 / DOT 5.1)',
+            'Sangria computadorizada do sistema hidráulico',
+            'Calibração eletrônica de ABS e EBD',
+            'Verificação de controles de tração (ESP)'
+        ]
+    },
+    eletrica: {
+        icon: 'fa-solid fa-bolt',
+        title: 'Elétrica Automotiva',
+        description: 'Soluções completas em elétrica automotiva, da bateria à injeção eletrônica, com equipamentos modernos para localizar e resolver falhas com precisão.',
+        features: [
+            'Baterias de alta performance, incluindo tecnologia AGM/EFB',
+            'Testes de alternadores e motores de partida',
+            'Mapeamento e reparo de chicotes elétricos',
+            'Reparo de painéis e módulos eletrônicos',
+            'Diagnóstico detalhado de injeção eletrônica'
+        ]
+    },
+    diagnostico: {
+        icon: 'fa-solid fa-gauge-high',
+        title: 'Diagnóstico Digital',
+        description: 'Leitura em tempo real via scanner automotivo de última geração, conectado diretamente à ECU do veículo, para identificar falhas ocultas com precisão.',
+        features: [
+            'Leitura de códigos de falha da injeção eletrônica',
+            'Verificação de sensores de estabilidade e airbags',
+            'Análise de sensores de emissão de poluentes',
+            'Diagnóstico de redes CAN e módulos integrados',
+            'Relatório completo com recomendações técnicas'
+        ]
+    },
+    suspensao: {
+        icon: 'fa-solid fa-compact-disc',
+        title: 'Suspensão e Direção',
+        description: 'Substituição técnica de componentes de suspensão e direção com alinhamento computadorizado de alta precisão, para conforto, estabilidade e segurança.',
+        features: [
+            'Amortecedores pressurizados e molas helicoidais',
+            'Buchas de poliuretano, pivôs, bandejas e terminais',
+            'Alinhamento computadorizado 3D de alta precisão',
+            'Ajuste de cambagem e cáster',
+            'Balanceamento de rodas dinâmico a laser'
+        ]
+    }
+};
+
+/**
+ * 4. MODAL DE DETALHES DO SERVIÇO
+ * Abre um card com mais informações ao clicar em qualquer solution-card,
+ * e permite ir direto ao formulário de contato já com o serviço selecionado.
+ */
 function initServiceModal() {
     const modal = document.getElementById('serviceModal');
     const modalClose = document.getElementById('modalClose');
